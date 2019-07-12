@@ -1,0 +1,39 @@
+#!/bin/bash
+
+## write all slurm jobs associated with SLURM_USERNAME to stdout
+## if jobname is provided, restricted to jobs with that name only
+show_jobs() {
+    if [ -z "$SLURM_USERNAME" ]
+    then
+        echo "SLURM_USERNAME needs to be set" >&2;
+        exit 2;
+    else
+        query="$SLURM_USERNAME"
+        if [ $# -gt 0 ]
+        then
+            query="${query}.*${1}"
+        fi
+        squeue | grep $query
+    fi
+}
+
+## count all jobs associated with SLURM_USERNAME
+count_jobs() {
+    show_jobs "$@" | wc -l
+}
+
+## kill all slurm jobs associated with a particular name
+kill_jobs ()
+{
+    if [ $# -lt 1 ]
+    then
+        echo "Please provide job name" >&2
+        return 2
+    fi
+    show_jobs "$@" |
+    while read jobid junk
+    do 
+        echo "Killing job $jobid"
+        scancel $jobid
+    done
+}
